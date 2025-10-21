@@ -22,7 +22,16 @@ pipeline {
         stage('Run Docker Containers') {
             steps {
                 bat '''
+                echo "🧹 Membersihkan container lama..."
+                docker stop nginx_server || exit 0
+                docker stop mysql_db || exit 0
+                docker stop laravel_app || exit 0
+                docker rm nginx_server || exit 0
+                docker rm mysql_db || exit 0
+                docker rm laravel_app || exit 0
                 docker-compose down || exit 0
+
+                echo "🚀 Menjalankan docker-compose up -d"
                 docker-compose up -d
                 '''
             }
@@ -31,8 +40,8 @@ pipeline {
         stage('Verify Container Running') {
             steps {
                 bat '''
-                timeout /t 10
-                curl -I http://localhost:8081 || echo "Gagal akses Laravel di port 8081"
+                timeout /t 10 >nul
+                curl -I http://localhost:8081 || echo "⚠️ Gagal mengakses Laravel di port 8081"
                 '''
             }
         }

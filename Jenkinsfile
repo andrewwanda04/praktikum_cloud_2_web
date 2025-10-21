@@ -22,7 +22,7 @@ pipeline {
         stage('Run Docker Containers') {
             steps {
                 bat '''
-                echo Matikan dan hapus container lama...
+                echo ==== HENTIKAN CONTAINER LAMA ====
                 docker stop laravel_app || echo "laravel_app tidak berjalan"
                 docker rm laravel_app || echo "laravel_app sudah dihapus"
                 docker stop nginx_server || echo "nginx_server tidak berjalan"
@@ -30,9 +30,12 @@ pipeline {
                 docker stop mysql_db || echo "mysql_db tidak berjalan"
                 docker rm mysql_db || echo "mysql_db sudah dihapus"
 
-                echo Jalankan ulang docker-compose...
+                echo ==== JALANKAN ULANG DOCKER COMPOSE ====
                 docker-compose down || exit 0
                 docker-compose up -d
+
+                echo ==== CEK CONTAINER YANG AKTIF ====
+                docker ps
                 '''
             }
         }
@@ -40,14 +43,16 @@ pipeline {
         stage('Verify Container Running') {
             steps {
                 bat '''
-                timeout /t 10
-                echo Cek koneksi ke Laravel...
-                curl -I http://localhost:8081 || echo "Gagal akses Laravel di port 8081"
+                echo ==== TUNGGU 20 DETIK SUPAYA CONTAINER SIAP ====
+                ping 127.0.0.1 -n 20 >nul
+
+                echo ==== CEK KONEKSI KE LARAVEL ====
+                curl -I http://127.0.0.1:8081 || echo "⚠️ Gagal akses Laravel di port 8081"
                 
                 echo.
-                echo ==== ISI HALAMAN ====
-                curl http://localhost:8081 || echo "Gagal ambil isi halaman"
-                echo =====================
+                echo ==== ISI HALAMAN (HARUSNYA MUNCUL 'Halo aku Andrew Wanda') ====
+                curl http://127.0.0.1:8081 || echo "⚠️ Gagal ambil isi halaman"
+                echo ===============================
                 '''
             }
         }

@@ -3,50 +3,47 @@ pipeline {
 
     environment {
         IMAGE_NAME = "laravel-app"
-        CONTAINER_APP = "laravel_app"
-        CONTAINER_WEB = "nginx_server"
-        CONTAINER_DB  = "mysql_db"
+        CONTAINER_NAME = "laravel_app"
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                echo '📦 Mengambil source code dari GitHub...'
                 git branch: 'main', url: 'https://github.com/andrewwanda04/praktikum_cloud_2_web.git'
             }
         }
 
-        stage('Build and Deploy with Docker Compose') {
+        stage('Build Docker Images') {
             steps {
-                echo '🚀 Membangun image dan menjalankan container...'
-                sh '''
-                docker compose down || true
-                docker compose up -d --build
+                bat 'docker-compose build'
+            }
+        }
+
+        stage('Run Docker Containers') {
+            steps {
+                bat '''
+                docker-compose down || exit 0
+                docker-compose up -d
                 '''
             }
         }
 
-        stage('Check Running Containers') {
+        stage('Verify Container Running') {
             steps {
-                echo '🔍 Mengecek container yang berjalan...'
-                sh 'docker ps'
-            }
-        }
-
-        stage('Health Check') {
-            steps {
-                echo '🩺 Mengecek apakah Laravel sudah aktif di port 8081...'
-                sh 'sleep 10 && curl -I http://localhost:8081 || true'
+                bat '''
+                timeout /t 10
+                curl -I http://localhost:8081 || echo "Gagal akses Laravel di port 8081"
+                '''
             }
         }
     }
 
     post {
         success {
-            echo '✅ Laravel berhasil dijalankan via Jenkins (port 8081)'
+            echo '✅ Laravel berhasil dijalankan via Docker Compose di port 8081!'
         }
         failure {
-            echo '❌ Build gagal, cek console log di Jenkins untuk detail error.'
+            echo '❌ Build gagal, cek log Jenkins console output.'
         }
     }
 }

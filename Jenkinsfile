@@ -22,6 +22,15 @@ pipeline {
         stage('Run Docker Containers') {
             steps {
                 bat '''
+                echo Matikan dan hapus container lama...
+                docker stop laravel_app || echo "laravel_app tidak berjalan"
+                docker rm laravel_app || echo "laravel_app sudah dihapus"
+                docker stop nginx_server || echo "nginx_server tidak berjalan"
+                docker rm nginx_server || echo "nginx_server sudah dihapus"
+                docker stop mysql_db || echo "mysql_db tidak berjalan"
+                docker rm mysql_db || echo "mysql_db sudah dihapus"
+
+                echo Jalankan ulang docker-compose...
                 docker-compose down || exit 0
                 docker-compose up -d
                 '''
